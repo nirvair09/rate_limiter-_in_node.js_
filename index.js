@@ -9,21 +9,51 @@ const MAX_TIME_WINDOW = 60_000; // 1 minute in terms of miliseconds
 
 const requestCount = {};
 
+//Instead of just storing a count, 
+// we’ll store both count and timestamp of the first request in that minute.
+
+
 app.use((req, res, next) => {
+
+
+    // if (!requestCount[clientIP]) {
+    //     requestCount[clientIP] = 1;
+    // } else {
+    //     requestCount[clientIP]++;
+    // }
+
+    // if (requestCount[clientIP] > MAX_REQ_LIMIT) {
+    //     return res.status(429).send("Too many requests , you hit the rate limitter , kindly try after 1min");
+
+    // } else {
+    //     next();
+    // }
     const clientIP = req.ip;
 
-    if (!requestCount[clientIP]) {
-        requestCount[clientIP] = 1;
-    } else {
-        requestCount[clientIP]++;
+    if (requestCount[clientIP] === undefined) {
+        requestCount[clientIP ]= {
+            count: 1,
+            firstRequestTime: Date.now(),
+        };
+
+        return next();
     }
 
-    if (requestCount[clientIP] > MAX_REQ_LIMIT) {
+    const data = requestCount[clientIP];
+    const timePassed = Date.now() - data.firstRequestTime;
+
+    if (timePassed > MAX_TIME_WINDOW) {
+        requestCount[clientIP] = { count: 1, firstRequestTime: Date.now() };
+        return next();
+    }
+
+    data.count++;
+
+    if (data.count > MAX_REQ_LIMIT) {
         return res.status(429).send("Too many requests , you hit the rate limitter , kindly try after 1min");
 
-    } else {
-        next();
     }
+    next();
 
 })
 
