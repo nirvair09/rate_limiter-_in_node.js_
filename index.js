@@ -1,4 +1,5 @@
-express = require('express');
+const express = require('express');
+const Redis=require('ioredis');
 const ip = require('ip');
 
 const app = express();
